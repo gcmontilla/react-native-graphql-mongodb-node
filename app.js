@@ -2,6 +2,10 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const graphqlHttp = require('express-graphql');
 const { graphql, buildSchema } = require('graphql');
+const mongoose = require('mongoose');
+
+const Event = require('./models/event');
+const User = require('./models/user');
 
 const app = express();
 
@@ -18,6 +22,17 @@ const schema = `
         date: String!
     }
 
+    type User {
+        _id: ID!
+        email: String!
+        password: String
+    }
+
+    input UserInput {
+        email: String!
+        password: String!
+    }
+
     input EventInput {
         title: String!
         description: String!
@@ -31,6 +46,7 @@ const schema = `
 
     type RootMutation {
         createEvent(eventInput: EventInput): Event
+        createUser(userInput: UserInput): User
     }
 
     schema {
@@ -57,10 +73,20 @@ app.use(
             };
             events.push(event);
             return event;
+        },
+        createUser: (args) => {
+            const user = {
+                _id:
+            }
         }
     },
     graphiql: true
 }));
 
-app.listen(3000);
-
+mongoose.connect(`mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false`)
+.then(() => {
+    app.listen(3000);
+})
+.catch(err => {
+    console.log(err)
+})
