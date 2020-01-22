@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const graphqlHttp = require('express-graphql');
 const { graphql, buildSchema } = require('graphql');
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 
 const Event = require('./models/event');
 const User = require('./models/user');
@@ -79,21 +80,35 @@ app.use(
                     throw err;
                 });
         },
-        createUser: (args) => {
-            const user = new User({
-                email: args.userInput.email,
-                password: args.userInput.password
-            });
-            return user
-                .save()
-                .then(result => {
-                    console.log(result);
-                    return {...result._doc};
+        createUser: args => {
+            User.findOne({email: args.userInput.email})
+                .then(user => {
+                    if (user) {
+                        throw new Error('Email already taken!');
+                    }
+                    return bcrypt.hash(args.userInput.password, 12);
+                })
+                .then(hashedPassword => {
+                    const user = new User({
+                        email: args.userInput.email,
+                        password: hashedPassword
+                    });
+                    return user
+                        .save()
+                        .then(result => {
+                            console.log(result);
+                            return {...result._doc, password: null, _id: result.id};
+                        })
+                        .catch(err => {
+                            console.log(err);
+                            throw err;
+                        });
                 })
                 .catch(err => {
-                    console.log(err);
                     throw err;
-                })
+                });
+            
+            
         }
     },
     graphiql: true
