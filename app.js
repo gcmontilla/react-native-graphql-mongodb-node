@@ -9,8 +9,6 @@ const User = require('./models/user');
 
 const app = express();
 
-const events = [];
-
 app.use(bodyParser.json());
 
 const schema = `
@@ -64,26 +62,45 @@ app.use(
             return events;
         },
         createEvent: (args) => {
-            const event = {
-                _id: Math.random().toString(),
+            const event = new Event({
                 title: args.eventInput.title,
                 description: args.eventInput.description,
                 price: +args.eventInput.price,
-                date: args.date
-            };
-            events.push(event);
-            return event;
+                date: new Date(args.eventInput.date)
+            });
+            return event
+                .save()
+                .then(result => {
+                    console.log(result);
+                    return {...result._doc};
+                })
+                .catch(err => {
+                    console.log(err);
+                    throw err;
+                });
         },
         createUser: (args) => {
-            const user = {
-                _id:
-            }
+            const user = new User({
+                email: args.userInput.email,
+                password: args.userInput.password
+            });
+            return user
+                .save()
+                .then(result => {
+                    console.log(result);
+                    return {...result._doc};
+                })
+                .catch(err => {
+                    console.log(err);
+                    throw err;
+                })
         }
     },
     graphiql: true
 }));
 
-mongoose.connect(`mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false`)
+// mongoose.connect(`mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASSWORD}@react-native-graphql-mongodb-node-fxqz8.mongodb.net/${process.env.MONGO_DB}?retryWrites=true&w=majority`)
+mongoose.connect('mongodb://localhost:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false')
 .then(() => {
     app.listen(3000);
 })
